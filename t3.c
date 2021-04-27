@@ -188,14 +188,14 @@ void checkArguments(char **remoteIp, char **role, int *remotePort, bool *goodArg
     if (strcmp("invite", *role) == 0)
     {
         *role = "client";
-        *remotePort = CLIENT_PORT;
+        *remotePort = SERVER_PORT;
         *goodArguments = true;
     }
     // server rol
     else if (strcmp("accept", *role) == 0)
     {
         *role = "server";
-        *remotePort = SERVER_PORT;
+        *remotePort = CLIENT_PORT;
         *goodArguments = true;
     }
     else
@@ -252,31 +252,36 @@ int main(int argc, char *argv[])
     // TODO: Determine remote port that you will send data to
     //       If you are server, send to client port, and vice versa
     bool openListener = openListenerPort(remoteIp, remotePort);
-    if(openListener) {
-    if (remotePort == CLIENT_PORT)
+    if (openListener)
     {
-        //client, initiate with sendData
-        printf("client\n");
-        sendData(remoteIp, remotePort, "invite");
-        myTurn = false;
-        myLetter = 'y';
-        opponentLetter = getOpponentLetter(&myLetter);
-        printf("Sending an invite\n");
+        if (strcmp(role, "client") == 0)
+        {
+            remotePort = SERVER_PORT;
+            //client, initiate with sendData
+            printf("client\n");
+            sendData(remoteIp, remotePort, "invite");
+            myTurn = false;
+            myLetter = 'y';
+            opponentLetter = getOpponentLetter(&myLetter);
+            printf("Sending an invite\n");
+        }
+        else if (strcmp(role, "server") == 0)
+        {
+            remotePort = CLIENT_PORT;
+            //server use RecieveData
+            printf("Waiting for an invitation\n");
+            char tmp[10];
+            receiveData(tmp, 10);
+            printf("data recieved %s\n", tmp);
+            myTurn = true;
+            myLetter = 'x';
+            opponentLetter = getOpponentLetter(&myLetter);
+        }
     }
-    else if (remotePort == SERVER_PORT)
+    else
     {
-        //server use RecieveData
-        printf("Waiting for an invitation\n");
-	char tmp[10];
-	receiveData(tmp, 10);
-	printf("data recieved %s\n", tmp);
-        myTurn = true;
-        myLetter = 'x';
-        opponentLetter = getOpponentLetter(&myLetter);
-    }
-    } else {
-	    printf("unable to open port");
-	    exit(1);
+        printf("unable to open port");
+        exit(1);
     }
 
     // Setup game
@@ -296,8 +301,8 @@ int main(int argc, char *argv[])
         if (myTurn)
         {
             printf("Enter your move(%c): ", myLetter);
-	    move[0] = getchar();
-	    move[1] = getchar();
+            move[0] = getchar();
+            move[1] = getchar();
             if (addMove(board, move, myLetter))
             {
                 validMove = true;
@@ -316,7 +321,7 @@ int main(int argc, char *argv[])
         // get opponent's move
         else
         {
-		printf("not my move");
+            printf("not my move");
             receiveData(move, 2);
             printf("Your opponent (%c) move to %s\n", opponentLetter, move);
             showBoard(board);
