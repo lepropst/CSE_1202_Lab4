@@ -183,7 +183,7 @@ void checkArguments(char **remoteIp, char **role, int *remotePort, bool *goodArg
 {
     *remoteIp = args[1];
     *role = args[2];
-    printf("%s\t%s\n\n", *remoteIp, *role);
+    printf("|%s|\t|%s|\n\n", *remoteIp, *role);
     // client role
     if (strcmp("invite", *role) == 0)
     {
@@ -214,13 +214,7 @@ int main(int argc, char *argv[])
     char *remoteIp;
     char rstring[6];
     char *role = rstring;
-    if (role == NULL)
-    {
-        printf("unable to allocate memory");
-        exit(1);
-    }
 
-    char str[100];
     char move[2];
     char board[3][3];
     bool validMove;
@@ -258,11 +252,12 @@ int main(int argc, char *argv[])
     // TODO: Determine remote port that you will send data to
     //       If you are server, send to client port, and vice versa
     bool openListener = openListenerPort(remoteIp, remotePort);
+    if(openListener) {
     if (remotePort == CLIENT_PORT)
     {
         //client, initiate with sendData
         printf("client\n");
-        bool sent = sendData(remoteIp, remotePort, "invite");
+        sendData(remoteIp, remotePort, "invite");
         myTurn = false;
         myLetter = 'y';
         opponentLetter = getOpponentLetter(&myLetter);
@@ -272,11 +267,16 @@ int main(int argc, char *argv[])
     {
         //server use RecieveData
         printf("Waiting for an invitation\n");
-
-        receiveData(str, 100);
+	char tmp[10];
+	receiveData(tmp, 10);
+	printf("data recieved %s\n", tmp);
         myTurn = true;
         myLetter = 'x';
         opponentLetter = getOpponentLetter(&myLetter);
+    }
+    } else {
+	    printf("unable to open port");
+	    exit(1);
     }
 
     // Setup game
@@ -296,8 +296,8 @@ int main(int argc, char *argv[])
         if (myTurn)
         {
             printf("Enter your move(%c): ", myLetter);
-            scanf("%s", move);
-
+	    move[0] = getchar();
+	    move[1] = getchar();
             if (addMove(board, move, myLetter))
             {
                 validMove = true;
@@ -316,14 +316,15 @@ int main(int argc, char *argv[])
         // get opponent's move
         else
         {
-            receiveData(str, 100);
-            printf("Your opponent (%c) move to %s\n", opponentLetter, str);
+		printf("not my move");
+            receiveData(move, 2);
+            printf("Your opponent (%c) move to %s\n", opponentLetter, move);
             showBoard(board);
             int x = 3;
             int y;
-            strcpy(move, str);
+            //strcpy(move, str);
             setCoords(&x, &y, move);
-            addMove(board, str, myLetter);
+            addMove(board, move, myLetter);
             isWinner(board, opponentLetter);
 
             // TODO: add code to receive your opponent's move, validate move,
