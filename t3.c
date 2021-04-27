@@ -11,11 +11,11 @@
 // Device includes, defines, and assembler directives
 //-----------------------------------------------------------------------------
 
-#include <stdlib.h>          // EXIT_ codes
-#include <stdbool.h>         // bool
-#include <stdio.h>           // printf, scanf
-#include <string.h>          // strlen, strcmp
-
+#include <stdlib.h>  // EXIT_ codes
+#include <stdbool.h> // bool
+#include <stdio.h>   // printf, scanf
+#include <string.h>  // strlen, strcmp
+#include <ctype.h>   // toupper
 #include "udp.h"
 
 #define CLIENT_PORT 4096
@@ -31,28 +31,36 @@ void clearBoard(char board[3][3])
 // TODO: Add code to display the game board
 void showBoard(char board[3][3])
 {
-	printf("Current Game Board:\n\n");
-	for(int i = 0; i < 3; i++) {
-		printf("\t");
-		for(int j = 0; j < 3; j++) {
-			printf("%c ", board[i][j]);
-		}
-	printf("\n");
-	}
+    printf("Current Game Board:\n\n");
+    for (int i = 0; i < 3; i++)
+    {
+        printf("\t");
+        for (int j = 0; j < 3; j++)
+        {
+            printf("%c ", board[i][j]);
+        }
+        printf("\n");
+    }
 }
 
-bool threeInARow(char row[3], char xo) {
-	int checks = 0;
-	for(int i = 0; i < 3; i++) {
-		if(strcmp(&row[i], &xo) == 0) {
-			checks++;
-		}
-	}
-	if(checks == 3) {
-		return true;
-	} else {
-		return false;
-	}
+bool threeInARow(char row[3], char xo)
+{
+    int checks = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        if (strcmp(&row[i], &xo) == 0)
+        {
+            checks++;
+        }
+    }
+    if (checks == 3)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 // TODO: Add code to determine if a winner (xo) has occurred
@@ -60,55 +68,160 @@ bool isWinner(char board[3][3], char xo)
 {
     bool win;
     char col1[3], col2[3], col3[3];
-    for(int i = 0; i < 3; i++) {
-	if(threeInARow(board[i], xo)) {
-		win = true;
-		return win;
-	}
-	for(int j = 0; j < 3; j++) {
-		if(j == 0) col1[j] = board[i][j];
-		if(j == 1) col2[j] = board[i][j];
-		if(j == 2) col3[j] = board[i][j];
-	}
+    for (int i = 0; i < 3; i++)
+    {
+        if (threeInARow(board[i], xo))
+        {
+            win = true;
+            return win;
+        }
+        for (int j = 0; j < 3; j++)
+        {
+            if (j == 0)
+                col1[j] = board[i][j];
+            if (j == 1)
+                col2[j] = board[i][j];
+            if (j == 2)
+                col3[j] = board[i][j];
+        }
     }
 
-    if(threeInARow(col1, xo)) return true;
-    if(threeInARow(col2, xo)) return true;
-    if(threeInARow(col3, xo)) return true;
+    if (threeInARow(col1, xo))
+        return true;
+    if (threeInARow(col2, xo))
+        return true;
+    if (threeInARow(col3, xo))
+        return true;
 
-    if(strcmp(&board[1][1], &xo) ==0) {
-    if(strcmp(&board[0][0], &xo) == 0) {
-	    if(strcmp(&board[2][2], &xo) == 0) {
-		    return true;
-	    }
+    if (strcmp(&board[1][1], &xo) == 0)
+    {
+        if (strcmp(&board[0][0], &xo) == 0)
+        {
+            if (strcmp(&board[2][2], &xo) == 0)
+            {
+                return true;
+            }
+        }
+        if (strcmp(&board[0][2], &xo) == 0)
+        {
+            if (strcmp(&board[2][0], &xo) == 0)
+            {
+                return true;
+            }
+        }
     }
-    if(strcmp(&board[0][2], &xo) == 0) {
-	    if(strcmp(&board[2][0], &xo) == 0) {
-		    return true;
-	    }
-    }
-}
 
     return win;
 }
 
 // TODO: Add code to test if an x or o (xo) is a valid move
 //       and then record in the game board
-bool addMove(char board[3][3], char move[], char xo)
+
+char getOpponentLetter(char *myLetter)
+{
+    if (*myLetter == 'x')
+    {
+        return 'y';
+    }
+    return 'x';
+}
+void setCoords(int *x, int *y, char move[2])
+{
+    *x = 3;
+    while (*x >= 0)
+    {
+        // if (char.ToUpper(move[0]).Equals(char.ToUpper(ROWS[*x])))
+        // if (move[0] == ROWS[*x])
+        if (toupper(move[0]) == toupper(ROWS[*x]))
+        {
+            break;
+        }
+        *x -= 1;
+    }
+    *y = move[1] - '0';
+    *y -= 1;
+    printf("%d, %d\n", *x, *y);
+}
+bool addMove(char board[3][3], char move[2], char xo)
 {
     bool ok = strlen(move) == 2;
+    if (!ok)
+    {
+        printf("wrong move\n");
+        return ok;
+    }
+    char opp = getOpponentLetter(&xo);
+    int x = 3;
+    int y;
+    setCoords(&x, &y, move);
+    printf("%d, %d\n", x, y);
+    if (board[x][y] == xo)
+    {
+        printf("Move already made\n");
+        ok = false;
+    }
+    else if (board[x][y] == opp)
+    {
+        printf("Opponent has made that move\n");
+        ok = false;
+    }
+    else if (board[x][y] == '.')
+    {
+        printf("Move made\n");
+        board[x][y] = xo;
+        ok = true;
+    }
+    else
+    {
+        printf("edge case not taken into account");
+        ok = false;
+    }
     return ok;
+}
+
+void checkArguments(char **remoteIp, char **role, int *remotePort, bool *goodArguments, char *args[3])
+{
+    *remoteIp = args[1];
+    *role = args[2];
+    printf("%s\t%s\n\n", *remoteIp, *role);
+    // client role
+    if (strcmp("invite", *role) == 0)
+    {
+        *role = "client";
+        *remotePort = CLIENT_PORT;
+        *goodArguments = true;
+    }
+    // server rol
+    else if (strcmp("accept", *role) == 0)
+    {
+        *role = "server";
+        *remotePort = SERVER_PORT;
+        *goodArguments = true;
+    }
+    else
+    {
+        printf("invalid role for application:\t%s\nQUITTING NOW\n", args[2]);
+        *goodArguments = false;
+    }
 }
 
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     char *remoteIp;
-    // tmp val to hold debugging value
-    char str[100], str2[100];
+    char rstring[6];
+    char *role = rstring;
+    if (role == NULL)
+    {
+        printf("unable to allocate memory");
+        exit(1);
+    }
+
+    char str[100];
+    char move[2];
     char board[3][3];
     bool validMove;
     bool winner = false;
@@ -119,78 +232,100 @@ int main(int argc, char* argv[])
     int remotePort;
 
     // TODO: Verify arguments are valie
-     bool goodArguments;
-    if(argc == 3) {
-	remoteIp = argv[1];	
-	strcpy("accept", str);
-	strcpy("invite", str2);   
-	
-	char *tmp = argv[2];
-	if(strcmp(str, tmp) == 0) {
-		strcpy("client", str);
-		remotePort = CLIENT_PORT;
-		goodArguments = true;
-	} else if(strcmp(str, tmp) == 0) {
-		strcpy("server", str2);
-		remotePort = SERVER_PORT;
-		goodArguments = true;
-	} else {
-		printf("invalid role for application:\t%s\nQUITTING NOW\n", argv[2]);
-		goodArguments = false;
-	}
+    bool goodArguments;
+    if (argc == 3)
+    {
 
+        checkArguments(&remoteIp, &role, &remotePort, &goodArguments, argv);
+        printf("ip: %s\nport %d\nrole: %s\n", remoteIp, remotePort, role);
+    }
+    else
+    {
+        printf("not correct amount of params");
+        goodArguments = false;
     }
     if (!goodArguments)
     {
-        printf("usage: t3 IPV4_ADDRESS ROLE\n");
-        printf("  where:\n");
-        printf("  IPV4_ADDRESS is address of the remote machine\n");
-        printf("  ROLE is either invite or accept\n");
+        printf("usage: t3 IPV4_ADDRESS ROLE\n\twhere:\n\tIPV4_ADDRESS is address of the remote machine\n\tROLE is either invite or accept\n");
         exit(EXIT_FAILURE);
-    } else {
-	    bool openListener = openListenerPort(remoteIp, remotePort);
     }
 
     // TODO: Determine if client or server
     // A server will wait to accept an invitation to play
     // A client will send an invitation to play
-    // DETERMINED ABOVE IN GOOD ARGUMENTS. ROLE AS CLIENT/SERVER IS STORED IN {ROLE} 
+    // DETERMINED ABOVE IN GOOD ARGUMENTS. ROLE AS CLIENT/SERVER IS STORED IN {ROLE}
     // TODO: Open listener port number dependent on client/server role
     // TODO: Determine remote port that you will send data to
     //       If you are server, send to client port, and vice versa
-	if(remotePort == CLIENT_PORT) {
-	//client, initiate with sendData
-		printf("client");
-		//sendData(remoteIp, remotePort, str);
-	} else if(remotePort == SERVER_PORT) {
-		//server use RecieveData
-		printf("server");
-	//	RecieveData(str2, 100);
-	}
-	
+    bool openListener = openListenerPort(remoteIp, remotePort);
+    if (remotePort == CLIENT_PORT)
+    {
+        //client, initiate with sendData
+        printf("client\n");
+        bool sent = sendData(remoteIp, remotePort, "invite");
+        myTurn = false;
+        myLetter = 'y';
+        opponentLetter = getOpponentLetter(&myLetter);
+        printf("Sending an invite\n");
+    }
+    else if (remotePort == SERVER_PORT)
+    {
+        //server use RecieveData
+        printf("Waiting for an invitation\n");
+
+        receiveData(str, 100);
+        myTurn = true;
+        myLetter = 'x';
+        opponentLetter = getOpponentLetter(&myLetter);
+    }
+
     // Setup game
     clearBoard(board);
     showBoard(board);
     // TODO: Determine whether it is your turn or not
     // myTurn = ______;
 
-
     // TODO: Determine your letter (x or o) and your opponent's letter
 
     // TODO: Add code to send an invite or wait to accept an invite
 
     // Start game loop, alternating turns
-    while(!winner && moveCount != 9)
+    while (!winner && moveCount != 9)
     {
         // get my move
         if (myTurn)
         {
+            printf("Enter your move(%c): ", myLetter);
+            scanf("%s", move);
+
+            if (addMove(board, move, myLetter))
+            {
+                validMove = true;
+                isWinner(board, myLetter);
+                sendData(remoteIp, remotePort, move);
+                printf("valid move\n");
+            }
+            else
+            {
+                validMove = false;
+                printf("invalid move, please try again: ");
+            }
             // TODO: add code your move here to get the move, validate move,
             //       show board, send move to remote port, and check for a winner
         }
         // get opponent's move
         else
         {
+            receiveData(str, 100);
+            printf("Your opponent (%c) move to %s\n", opponentLetter, str);
+            showBoard(board);
+            int x = 3;
+            int y;
+            strcpy(move, str);
+            setCoords(&x, &y, move);
+            addMove(board, str, myLetter);
+            isWinner(board, opponentLetter);
+
             // TODO: add code to receive your opponent's move, validate move,
             //       show board, and check for a winner
         }
@@ -200,10 +335,12 @@ int main(int argc, char* argv[])
         myTurn = !myTurn;
     }
     if (!winner)
+    {
+
         printf("The game was a draw\n");
-
-
+    }
     // TO DO: Close listener port
+
     closeListenerPort();
     return EXIT_SUCCESS;
 }
